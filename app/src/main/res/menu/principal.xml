@@ -2,8 +2,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/action_settings"
+        android:id="@+id/mnu_busqueda"
+        android:enabled="false"
+        android:icon="@drawable/search"
+        android:iconTint="@android:color/background_light"
         android:orderInCategory="100"
-        android:title="@string/action_settings"
-        app:showAsAction="never" />
+        android:title="Buscar"
+        android:visible="true"
+        app:showAsAction="never|ifRoom" />
+    <item
+        android:id="@+id/mnu_vista"
+        android:icon="@drawable/grid"
+        android:iconTint="@android:color/background_light"
+        android:title="Vista"
+        app:showAsAction="never|ifRoom" />
 </menu>
