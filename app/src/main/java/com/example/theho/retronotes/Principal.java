@@ -51,8 +51,7 @@ public class Principal extends AppCompatActivity
                 Intent nuevaNota = new Intent(Principal.this, IntroducirNota.class);
                 startActivityForResult(nuevaNota, request_code);
 
-                Snackbar.make(view, "Nota guardada", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+
 
             }
         });
