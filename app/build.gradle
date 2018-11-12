@@ -28,4 +28,8 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     compile 'com.android.support:support-annotations:27.1.1'
+    //Color picker library
+    compile 'petrov.kristiyan.colorpicker:colorpicker-library:1.1.2'
+    implementation 'com.github.yukuku:ambilwarna:2.0.1'
+    //implementation 'petrov.kristiyan:colorpicker-library:1.1.10'
 }

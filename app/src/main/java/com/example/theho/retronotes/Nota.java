@@ -1,15 +1,16 @@
 package com.example.theho.retronotes;
 
 public class Nota {
-    String titulo, contenido, hora;
-    int color;
-    boolean favorito;
+    private String titulo, contenido, hora, color;
 
-    public Nota(String titulo, String contenido, String hora, int color, boolean favorito) {
+    //private boolean favorito;
+
+
+    public Nota(String titulo, String contenido, String hora, String color) {
         this.titulo = titulo;
         this.contenido = contenido;
         this.color = color;
-        this.favorito = favorito;
+        //this.favorito = favorito;
         this.hora=hora;
     }
 
@@ -37,19 +38,19 @@ public class Nota {
         this.contenido = contenido;
     }
 
-    public int getColor() {
+    public String getColor() {
         return color;
     }
 
-    public void setColor(int color) {
+    public void setColor(String color) {
         this.color = color;
     }
-
+/*
     public boolean isFavorito() {
         return favorito;
     }
 
     public void setFavorito(boolean favorito) {
         this.favorito = favorito;
-    }
+    }*/
 }
