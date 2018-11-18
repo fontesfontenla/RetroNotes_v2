@@ -1,18 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#006f9e</color>
-    <color name="colorPrimaryDark">#00618a</color>
-    <color name="colorAccent">#6d6f70</color>
-    <color name="textoToolbar">#000000</color>
-    <color name="colorFondo1">#8d1915</color>
-    <color name="colorFondo2">#3C8D2F</color>
-    <color name="colorFondo3">#20724F</color>
-    <color name="colorFondo4">#f181f1</color>
-    <color name="colorFondo5">#800080</color>
-    <color name="colorFondo6">#966D37</color>
-    <color name="colorFondo7">#B77231</color>
-    <color name="colorFondo8">#808000</color>
-    <color name="colorFondo9">#323299</color>
+    <color name="colorPrimary">#503a31</color>
+    <color name="colorPrimaryDark">#503a31</color>
+    <color name="colorAccent">#ffd41E</color>
+    <color name="colorFondo">#fcf3cc</color>
+
+    <color name="colorFondo1">#F6402C</color>
+    <color name="colorFondo2">#EB1460</color>
+    <color name="colorFondo3">#9C1AB1</color>
+    <color name="colorFondo4">#6633B9</color>
+    <color name="colorFondo5">#3D4DB7</color>
+    <color name="colorFondo6">#46AF4A</color>
+    <color name="colorFondo7">#009687</color>
+    <color name="colorFondo8">#00BBD5</color>
+    <color name="colorFondo9">#00A6F6</color>
+    <color name="colorFondo10">#572B9D</color>
+    <color name="colorFondo11">#88C440</color>
+    <color name="colorFondo12">#CCDD1E</color>
+    <color name="colorFondo13">#FFEC16</color>
+    <color name="colorFondo14">#FE9700</color>
+    <color name="colorFondo15">#5E7C8B</color>
+    <color name="colorFondo16">#9D9D9D</color>
+    <color name="colorFondo17">#7A5547</color>
+    <color name="colorFondo18">#FF5505</color>
+
 
 </resources>
 

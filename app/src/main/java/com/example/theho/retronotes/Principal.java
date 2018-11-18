@@ -1,11 +1,11 @@
 package com.example.theho.retronotes;
 
-import android.app.ListActivity;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.widget.ListViewAutoScrollHelper;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -14,21 +14,36 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 
-public class Principal extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+
+public class Principal extends AppCompatActivity {
     private ListView lv;
     private Adaptador adaptador;
     private ArrayList<Nota> nota;
 
+    String response_body;
     int request_code;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,26 +52,64 @@ public class Principal extends AppCompatActivity
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        //Creacion de un ArrayList
-        nota = new ArrayList<>();
+        //Obtenemos los datos para mostrar en listView
+        ObtDatos();
 
-        Nota nota1 = new Nota("Nota 1", "Contenido nota 1", "11:30","#ff66c1");
-        Nota nota2 = new Nota("Nota 2", "Contenido nota 2", "12:30","#66cdaa");
-        Nota nota3 = new Nota("Nota 3", "Contenido nota 3", "13:30","#f2de15");
-        Nota nota4 = new Nota("Nota 4", "Contenido nota 4", "14:30","#cc0000");
-        Nota nota5 = new Nota("Nota 5", "Contenido nota 5", "15:30","#8187ff");
-        nota.add(nota1);
-        nota.add(nota2);
-       /* nota.add(nota3);
-        nota.add(nota4);
-        nota.add(nota5);
-*/
-        //Añadir notas a la listview principal
+        //Generamos un arrayList de tipo Nota donde se guardaran los datos para mostrarlos
+        nota = new ArrayList<>();
         adaptador = new Adaptador(nota, this);
         lv = findViewById(R.id.lvNotas);
         lv.setAdapter(adaptador);
+        adaptador.notifyDataSetChanged();
 
-        //Boton flotante te envia al activity secundario
+        //Si se hace un click sobre la nota se puede editar
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                request_code = 1;
+                //Obtenemos el JSON de todos los datos, para conseguir el elemento concreto que buscamos
+                try {
+                    JSONArray jsonArray = new JSONArray(response_body);
+                    String tituloCambiar;
+                    String contenidoCambiar;
+
+                    //Conseguimos todas las variables que buscamos en la posicion seleccionada
+                    tituloCambiar = jsonArray.getJSONObject(position).getString("titulo");
+                    contenidoCambiar = jsonArray.getJSONObject(position).getString("contenido");
+
+                    //Lanzamos un intent a ActualizarNota para que muestre los datos ya guardados
+                    Intent actualizarNota = new Intent(Principal.this, ActualizarNota.class);
+                    actualizarNota.putExtra("TITULO", tituloCambiar);
+                    actualizarNota.putExtra("CONTENIDO", contenidoCambiar);
+                    startActivityForResult(actualizarNota, request_code);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //Un click largo en la nota la elimina de la lista
+        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                try {
+                    //Obtenemos los datos de la nota seleccionada de su JSON
+                    JSONArray jsonArray = new JSONArray(response_body);
+                    String tituloBorrar;
+                    String contenidoBorrar;
+                    tituloBorrar = jsonArray.getJSONObject(position).getString("titulo");
+                    contenidoBorrar = jsonArray.getJSONObject(position).getString("contenido");
+                    //Ejecutamos la URL que borra datos
+                    new CargarDatos().execute("http://192.168.1.38/RetroNotes/borrado.php?titulo=" + tituloBorrar + "&contenido=" + contenidoBorrar);
+                    Toast.makeText(getApplicationContext(), "Nota eliminada", Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+        });
+
+        //Boton flotante te envia al activity secundario para que se cree una nota nueva
         FloatingActionButton fab = findViewById(R.id.fab_nueva_nota);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -67,93 +120,171 @@ public class Principal extends AppCompatActivity
             }
         });
 
-        //Menu lateral
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-
     }
 
-    //Accion cuando volvemos del segundo activity
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+        //Accion cuando volvemos del segundo activity
         if (requestCode == request_code && resultCode == RESULT_OK) {
-            String titulo = data.getSerializableExtra("TITULO").toString();
-            String contenido = data.getSerializableExtra("CONTENIDO").toString();
-            String fecha = data.getSerializableExtra("HORA").toString();
-            String colorNota=data.getSerializableExtra("COLOR").toString();
-            Log.i("colornotaprincipal", colorNota);
-            Nota nuevaNota = new Nota(titulo, contenido, fecha,"#"+colorNota);
-            nota.add(nuevaNota);
-            adaptador = new Adaptador(nota, this);
+            //Se cargan los datos de nuevo para actualizar la lista
+            ObtDatos();
+            adaptador = new Adaptador(nota, getApplicationContext());
+            lv = findViewById(R.id.lvNotas);
             lv.setAdapter(adaptador);
             adaptador.notifyDataSetChanged();
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
+    /**
+     * CargarDatos: clase que ejecuta la URL del archivo PHP en la base de datos para que ejecute
+     * cambios en la base de datos
+     */
+    private class CargarDatos extends AsyncTask<String, Void, String> {
+        @Override
+        //La conexion a la URL la realiza por detras, en otro hilo, asi evitamos crasheos
+        protected String doInBackground(String... urls) {
+            try {
+                return descargaUrl(urls[0]);
+            } catch (IOException e) {
+                return "Conexion fallida a pagina web. URL puede no ser valida";
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            //Despues de realizar el borrado de los datos, actualizamos la listview para que se muestre
+            //con los datos nuevos
+            adaptador = new Adaptador(nota, getApplicationContext());
+            lv = findViewById(R.id.lvNotas);
+            lv.setAdapter(adaptador);
+            adaptador.notifyDataSetChanged();
+            //Obtenemos los datos de nuevo
+            ObtDatos();
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.principal, menu);
-        return true;
-    }
+    /**
+     * descargaURL: se conecta a la URL especificada, y lo que consigue lo convierte en un inputStream
+     * para convertirlo en un String
+     *
+     * @param miUrl URL a ejecutar
+     * @return contenido en string
+     * @throws IOException
+     */
+    private String descargaUrl(String miUrl) throws IOException {
+        InputStream is = null;
+        miUrl = miUrl.replace(" ", "%20");
+        int len = 500;
+        try {
+            //Convierte la URL como String en un objeto URL
+            URL url = new URL(miUrl);
+            //Creamos la conexion
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setReadTimeout(10000);
+            conn.setConnectTimeout(15000);
+            conn.setRequestMethod("GET");
+            conn.setDoInput(true);
+            //Conectamos
+            conn.connect();
+            //Lo que responda la URl, lo guarda en el inputStream
+            is = conn.getInputStream();
 
-    //TODO Opcion del actionbar de busqueda
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.mnu_busqueda) {
-            return true;
+            //Convertimos el contenido en un string
+            String contentAsString = pasoAString(is, len);
+            return contentAsString;
+        } finally {
+            if (is != null) {
+                is.close();
+            }
         }
-
-        return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
+    /**
+     * pasoAString: transforma el contenido recogido de la URL en string mediante buffer
+     *
+     * @param stream   inputStream de la URL
+     * @param longitud longitud de la URL
+     * @return
+     * @throws IOException
+     * @throws UnsupportedEncodingException
+     */
+    //Transforma el resultado de la conexion URL a String mediante un buffer
+    public String pasoAString(InputStream stream, int longitud) throws IOException, UnsupportedEncodingException {
+        Reader reader = null;
+        reader = new InputStreamReader(stream, "UTF-8");
+        char[] buffer = new char[longitud];
+        reader.read(buffer);
+        return new String(buffer);
+    }
 
-        if (id == R.id.nav_notas) {
-            // Handle the camera action
-        } else if (id == R.id.nav_destacados) {
 
-        } else if (id == R.id.nav_ordenar) {
+    /**
+     * Obtenemos los datos de consulta de toda la abse de datos para que los clasifique y los guarde,
+     * y a su vez se muestren
+     */
+    public void ObtDatos() {
+        AsyncHttpClient client = new AsyncHttpClient();
+        String url = "http://192.168.1.38/RetroNotes/consulta.php";
+        RequestParams parametros = new RequestParams();
+        parametros.put("id", 8);
+        client.post(url, parametros, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, org.apache.http.Header[] headers, byte[] responseBody) {
+                if (statusCode == 200) {
+                    //Carga el arrayList de los objeton JSON
+                    CargarLista(obtDatosJSON(new String(responseBody)));
+                    response_body = new String(responseBody);
+                }
+            }
 
-        } else if (id == R.id.nav_color) {
+            @Override
+            public void onFailure(int statusCode, org.apache.http.Header[] headers, byte[] responseBody, Throwable error) {
 
-        } else if (id == R.id.nav_ajustes) {
+            }
+        });
+    }
 
-        } else if (id == R.id.nav_info) {
+    /**
+     * Carga el listView con los datos sacados de obtDatosJSON
+     *
+     * @param datos arrayList de datos
+     */
+    public void CargarLista(ArrayList<Nota> datos) {
+        adaptador = new Adaptador(datos, this);
+        lv = findViewById(R.id.lvNotas);
+        lv.setAdapter(adaptador);
+        adaptador.notifyDataSetChanged();
+    }
 
+    /**
+     * Obtiene los datos de la base de datos en JSON y los guarda por separado en un array de tipo Nota
+     *
+     * @param respuesta
+     * @return
+     */
+    public ArrayList<Nota> obtDatosJSON(String respuesta) {
+        ArrayList<Nota> listado = new ArrayList();
+        try {
+            JSONArray jsonArray = new JSONArray(respuesta);
+            String titulo;
+            String contenido;
+            String color;
+            String hora;
+            for (int i = 0; i < jsonArray.length(); i++) {
+                //Conseguimos todas las variables y las guardamos en un arrayList de tipo Nota
+                titulo = jsonArray.getJSONObject(i).getString("titulo");
+                contenido = jsonArray.getJSONObject(i).getString("contenido");
+                color = jsonArray.getJSONObject(i).getString("color");
+                hora = jsonArray.getJSONObject(i).getString("hora");
+                Nota nuevaNota = new Nota(titulo, contenido, hora, "#" + color);
+                listado.add(nuevaNota);
+            }
+        } catch (JSONException error) {
+            error.printStackTrace();
         }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
+        return listado;
     }
+
 }

@@ -24,12 +24,12 @@
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_nueva_nota"
-        android:layout_width="51dp"
-        android:layout_height="47dp"
+        android:layout_width="53dp"
+        android:layout_height="54dp"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
         app:srcCompat="@drawable/add"
-        tools:layout_editor_absoluteX="317dp"
-        tools:layout_editor_absoluteY="504dp" />
+        tools:layout_editor_absoluteX="315dp"
+        tools:layout_editor_absoluteY="497dp" />
 
 </android.support.design.widget.CoordinatorLayout>
