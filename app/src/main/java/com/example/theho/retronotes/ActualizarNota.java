@@ -26,7 +26,7 @@ public class ActualizarNota extends AppCompatActivity {
     EditText titulo, contenido;
     ConstraintLayout layout;
     String tituloAntiguo, contenidoAntiguo;
-
+String IP="10.0.2.2";
 
 
     @Override
@@ -69,9 +69,10 @@ public class ActualizarNota extends AppCompatActivity {
                     onBackPressed();
                 } else {
                     //Llamamos a CargarDatos al que le pasamos la URL con los datos pasamos como GET
-                    new CargarDatos().execute("http://192.168.1.38/RetroNotes/update.php?titulo=" + tituloNuevo + "" +
+                    //ENLACE IP
+                    new CargarDatos().execute("http://"+IP+"/RetroNotes/update.php?titulo=" + tituloNuevo + "" +
                             "&contenido=" + contenidoNuevo + "&tituloAnterior=" + tituloAntiguo + "&contenidoAnterior=" + contenidoAntiguo);
-                }
+                                }
                 break;
             case R.id.mnu_aceptar:
                 //Si el contenido es el mismo o diferente
@@ -79,7 +80,8 @@ public class ActualizarNota extends AppCompatActivity {
                     onBackPressed();
                 } else {
                     //Llamamos a CargarDatos al que le pasamos la URL con los datos pasamos como GET
-                    new CargarDatos().execute("http://192.168.1.38/RetroNotes/update.php?titulo=" + tituloNuevo + "" +
+                    //ENLACE IP
+                    new CargarDatos().execute("http://"+IP+"/RetroNotes/update.php?titulo=" + tituloNuevo + "" +
                             "&contenido=" + contenidoNuevo + "&tituloAnterior=" + tituloAntiguo + "&contenidoAnterior=" + contenidoAntiguo);
                 }
                 setResult(RESULT_OK, notaCambiadaVuelta);

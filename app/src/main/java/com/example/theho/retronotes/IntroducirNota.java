@@ -36,6 +36,7 @@ public class IntroducirNota extends AppCompatActivity {
     EditText titulo, contenido;
     String colorNota = "ffffff";
     ConstraintLayout layout;
+    String IP="10.0.2.2";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -184,8 +185,9 @@ public class IntroducirNota extends AppCompatActivity {
                     String tituloGuardar = titulo.getText().toString();
                     String contenidoGuardar = contenido.getText().toString();
                     String colorGuardar = colorNota;
-                    //GUardamos los datos en la abse de datos
-                    new CargarDatos().execute("http://192.168.1.38/RetroNotes/registro.php?titulo=" + tituloGuardar + "" +
+                    //Guardamos los datos en la base de datos
+                    //ENLACE IP
+                    new CargarDatos().execute("http://"+IP+"/RetroNotes/registro.php?titulo=" + tituloGuardar + "" +
                             "&contenido=" + contenidoGuardar + "&color=" + colorGuardar);
 
                     Intent nuevaNotaVuelta = new Intent();

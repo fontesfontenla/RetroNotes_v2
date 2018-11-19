@@ -25,18 +25,21 @@ tools:context="com.example.theho.retronotes.ActualizarNota">
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent" />
 
-<EditText
-    android:id="@+id/contenidoNota"
-    android:layout_width="0dp"
-    android:layout_height="25dp"
-    android:layout_marginEnd="16dp"
-    android:layout_marginStart="16dp"
-    android:layout_marginTop="16dp"
-    android:background="@android:color/transparent"
-    android:hint="Añadir nota"
-    android:inputType="textMultiLine"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@+id/tituloNota" />
+    <EditText
+        android:id="@+id/contenidoNota"
+        android:layout_width="0dp"
+        android:layout_height="436dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@android:color/transparent"
+        android:gravity="top|left"
+        android:hint="Añadir nota"
+        android:inputType="textMultiLine"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tituloNota" />
 
 </android.support.constraint.ConstraintLayout>

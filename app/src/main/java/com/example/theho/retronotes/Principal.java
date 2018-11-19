@@ -43,7 +43,7 @@ public class Principal extends AppCompatActivity {
 
     String response_body;
     int request_code;
-
+    String IP="10.0.2.2";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,7 +100,8 @@ public class Principal extends AppCompatActivity {
                     tituloBorrar = jsonArray.getJSONObject(position).getString("titulo");
                     contenidoBorrar = jsonArray.getJSONObject(position).getString("contenido");
                     //Ejecutamos la URL que borra datos
-                    new CargarDatos().execute("http://192.168.1.38/RetroNotes/borrado.php?titulo=" + tituloBorrar + "&contenido=" + contenidoBorrar);
+                    //ENLACE IP
+                    new CargarDatos().execute("http://"+IP+"/RetroNotes/borrado.php?titulo=" + tituloBorrar + "&contenido=" + contenidoBorrar);
                     Toast.makeText(getApplicationContext(), "Nota eliminada", Toast.LENGTH_SHORT).show();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -226,7 +227,8 @@ public class Principal extends AppCompatActivity {
      */
     public void ObtDatos() {
         AsyncHttpClient client = new AsyncHttpClient();
-        String url = "http://192.168.1.38/RetroNotes/consulta.php";
+        //ENLACE IP
+        String url = "http://"+IP+"/RetroNotes/consulta.php";
         RequestParams parametros = new RequestParams();
         parametros.put("id", 8);
         client.post(url, parametros, new AsyncHttpResponseHandler() {
