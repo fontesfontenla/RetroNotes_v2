@@ -1,10 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--Classic theme-->
     <color name="colorPrimary">#503a31</color>
     <color name="colorPrimaryDark">#503a31</color>
     <color name="colorAccent">#ffd41E</color>
     <color name="colorFondo">#fcf3cc</color>
+    <!--Dark theme-->
+    <color name="darkPrimary">#212121</color>
+    <color name="darkPrimaryOscuro">#212121</color>
+    <color name="darkAccent">#4282F0</color>
+    <color name="darkFondo">#424242</color>
+    <!--Light theme-->
+    <color name="lightPrimary">#607D8B</color>
+    <color name="lightPrimaryOscuro">#607D8B</color>
+    <color name="lightAccent">#4dd0e1</color>
+    <color name="lightFondo">#f4f4f4</color>
 
+    <!--Colores notas-->
     <color name="colorFondo1">#F6402C</color>
     <color name="colorFondo2">#EB1460</color>
     <color name="colorFondo3">#9C1AB1</color>
@@ -23,7 +35,5 @@
     <color name="colorFondo16">#9D9D9D</color>
     <color name="colorFondo17">#7A5547</color>
     <color name="colorFondo18">#FF5505</color>
-
-
 </resources>
 

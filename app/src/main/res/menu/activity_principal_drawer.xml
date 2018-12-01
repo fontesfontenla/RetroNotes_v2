@@ -3,15 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <group android:checkableBehavior="single">
-        <item
-            android:id="@+id/nav_notas"
-            android:icon="@drawable/note"
-            android:title="Notas" />
-        <item
-            android:id="@+id/nav_info"
-            android:icon="@android:drawable/ic_dialog_info"
-            android:title="Acerca de" />
-    </group>
+
+                <item
+                    android:id="@+id/nav_notas"
+                    android:icon="@drawable/note"
+                    android:title="@string/titulo_principal" />
+                <item
+                    android:id="@+id/nav_tema"
+                    android:icon="@drawable/color"
+                    android:title="@string/opc_temas" />
+
+                <item
+                    android:id="@+id/nav_cambio_ip"
+                    android:icon="@drawable/conexion"
+                    android:title="@string/opc_ip" />
+                <item
+                    android:id="@+id/nav_info"
+                    android:icon="@android:drawable/ic_dialog_info"
+                    android:title="@string/opc_acercade" />
 
 </menu>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RetroNotes</string>
+    <string name="titulo_principal">Notes</string>
+    <string name="opc_temas">Themes</string>
+    <string name="opc_ip">Change IP</string>
+    <string name="opc_acercade">About</string>
+    <string name="entrada_titulo">Note\'s title</string>
+    <string name="entrada_contenido">Content</string>
+    <string name="color_titulo">Pick a color</string>
+    <string name="toast_notaguardada">Note saved correctly</string>
+    <string name="toast_notaeliminada">Note deleted</string>
+    <string name="toast_actualizarnota">Note updated</string>
+    <string name="menu_cambioip">Insert IP connection</string>
+    <string name="menu_eliminarnota">Delete</string>
+    <string name="menu_editarnota">Edit</string>
+    <string name="toast_ipcorrecta">IP valid</string>
+    <string name="toast_ipincorrecta">Invalid IP. Try another one</string>
+    <string name="toast_modooscuro">Dark mode activated</string>
+    <string name="toast_modoclasico">Classic mode activated</string>
+    <string name="btn_aceptar">OK</string>
+    <string name="btn_cancelar">Cancel</string>
+    <string name="menu_tema_titulo">Pick a theme</string>
+    <string name="menu_tema_oscuro">Dark</string>
+    <string name="menu_tema_clasico">Classic</string>
+    <string name="info">RetroNotes\n
+                        Version: 1.2\n
+                        Developed by: Sergio Fontes Fontenla\n
+                        Used open-source libraries:\n
+                        \t-Android Async Http 1.4.9
+                        \t-Colorpicker by KristiyanP\n
+                        Final work for Colegio Vivas S.L, 2018</string>
+</resources>

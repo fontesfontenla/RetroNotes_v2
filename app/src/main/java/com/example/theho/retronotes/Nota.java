@@ -5,28 +5,19 @@ package com.example.theho.retronotes;
  */
 public class Nota {
 
-    private String titulo, contenido, hora, color;
+    private String titulo, contenido, color;
 
     /**
      * Nota: metodo de llamada para crear notas y luego poder guardarlas
      * @param titulo titulo de la nota
      * @param contenido contenido de la nota
-     * @param hora fecha (formato dia/mes) en la que se guardo la nota
      * @param color color de fondo de la nota que se mostrará en el ListView
      */
-    public Nota(String titulo, String contenido, String hora, String color) {
+    public Nota(String titulo, String contenido,  String color) {
         this.titulo = titulo;
         this.contenido = contenido;
         this.color = color;
-        this.hora=hora;
-    }
 
-    public String getHora() {
-        return hora;
-    }
-
-    public void setHora(String hora) {
-        this.hora = hora;
     }
 
     public String getTitulo() {

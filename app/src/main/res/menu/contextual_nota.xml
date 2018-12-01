@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/opcEditar"
+        android:title="@string/menu_editarnota"></item>
+    <item
+        android:id="@+id/opcBorrar"
+        android:title="@string/menu_eliminarnota"></item>
+
+</menu>

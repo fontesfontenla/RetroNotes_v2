@@ -2,6 +2,8 @@ package com.example.theho.retronotes;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,13 +52,21 @@ public class Adaptador extends BaseAdapter {
         //Obtenemos los parametros de visualziacion de datos
         TextView titulo = convertView.findViewById(R.id.txtTitulo);
         TextView contenido = convertView.findViewById(R.id.txtContenido);
-        TextView hora = convertView.findViewById(R.id.txtHora);
 
         //Se asocian a los datos reogidos del arrayList
         titulo.setText(arrayList.get(position).getTitulo());
         contenido.setText(arrayList.get(position).getContenido());
-        hora.setText(arrayList.get(position).getHora());
         convertView.setBackgroundColor(Color.parseColor(arrayList.get(position).getColor()));
+
+        String colorNota=arrayList.get(position).getColor().toLowerCase();
+        //Si el color de fondo de la nota es blanco cambiamos el color de texto a negro
+        if(colorNota.equals("#ffffff")){
+            titulo.setTextColor(ContextCompat.getColor(context,R.color.darkPrimaryOscuro));
+            contenido.setTextColor(ContextCompat.getColor(context,R.color.darkPrimaryOscuro));
+        } else{
+            titulo.setTextColor(ContextCompat.getColor(context,R.color.white));
+            contenido.setTextColor(ContextCompat.getColor(context,R.color.white));
+        }
 
         return convertView;
     }

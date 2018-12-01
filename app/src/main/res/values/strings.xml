@@ -78,4 +78,34 @@
     <string name="pref_ringtone_silent">Silent</string>
 
     <string name="pref_title_vibrate">Vibrate</string>
+    <string name="titulo_principal">Notas</string>
+    <string name="opc_temas">Temas</string>
+    <string name="opc_ip">Cambiar IP</string>
+    <string name="opc_acercade">Acerca de</string>
+    <string name="entrada_titulo">Titulo de la nota</string>
+    <string name="entrada_contenido">Contenido</string>
+    <string name="color_titulo">Elige un color</string>
+    <string name="toast_notaguardada">Nota guardada correctamente</string>
+    <string name="toast_notaeliminada">Nota eliminada</string>
+    <string name="toast_actualizarnota">Nota actualizada</string>
+    <string name="menu_cambioip">Introduzca la IP de conexion</string>
+    <string name="menu_eliminarnota">Eliminar</string>
+    <string name="menu_editarnota">Editar</string>
+    <string name="toast_ipcorrecta">IP correcta</string>
+    <string name="toast_ipincorrecta">IP incorrecta. Pruebe con otra dirección</string>
+    <string name="toast_modooscuro">Modo oscuro activado</string>
+    <string name="toast_modoclasico">Modo clásico activado</string>
+    <string name="btn_aceptar">Aceptar</string>
+    <string name="btn_cancelar">Cancelar</string>
+    <string name="menu_tema_titulo">Selecciona un tema</string>9
+    <string name="menu_tema_oscuro">Oscuro</string>
+    <string name="menu_tema_clasico">Clasico</string>
+
+    <string name="info">RetroNotes\n
+                        Version: 1.2\n
+                        Desarrollador: Sergio Fontes Fontenla\n
+                        Librerias de codigo abierto utilizadas:\n
+                        \t-Android Async Http 1.4.9
+                        \t-Colorpicker by KristiyanP\n
+                        Trabajo de Fin de Ciclo para Colegio Vivas S.L, 2018</string>
 </resources>

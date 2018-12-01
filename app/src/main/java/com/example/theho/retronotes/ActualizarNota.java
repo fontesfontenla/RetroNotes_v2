@@ -1,10 +1,14 @@
 package com.example.theho.retronotes;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,20 +26,27 @@ import java.net.URL;
 /**
  * ACTUALIZARNOTA: clase que actualiza los datos de una nota cuando se hace una pulsación sobre ella
  */
-public class ActualizarNota extends AppCompatActivity {
+public class ActualizarNota extends AppCompatActivity{
     EditText titulo, contenido;
     ConstraintLayout layout;
     String tituloAntiguo, contenidoAntiguo;
-String IP="10.0.2.2";
-
-
+    String IP;
+    SharedPreferences preferencias;
+    ConexionMySQL conexionRemota;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //Conseguimos el tema elegido y lo establecemos
+        preferencias = this.getSharedPreferences("Preferencias", Context.MODE_PRIVATE);
+        int tema=preferencias.getInt("TEMA",R.style.AppTheme);
+        setTheme(tema);
+
         setContentView(R.layout.activity_actualizar_nota);
-        //Quitamos el titulo
-        getSupportActionBar().setTitle("");
+        Toolbar toolbar = findViewById(R.id.toolbar3);
+        toolbar.setTitle("");
+        setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         //Obtenemos los elementos de entrada de datos y demas
         titulo = findViewById(R.id.tituloNota);
         contenido = findViewById(R.id.contenidoNota);
@@ -44,10 +55,15 @@ String IP="10.0.2.2";
         Intent mensaje = getIntent();
         tituloAntiguo = mensaje.getStringExtra("TITULO");
         contenidoAntiguo = mensaje.getStringExtra("CONTENIDO");
+
         //Esos datos se ponen en los campos de edicion
         titulo.setText(tituloAntiguo);
         contenido.setText(contenidoAntiguo);
+
+        preferencias = this.getSharedPreferences("Preferencias", Context.MODE_PRIVATE);
+        IP = preferencias.getString("IPNUEVA", "10.0.2.2");
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -61,6 +77,8 @@ String IP="10.0.2.2";
         Intent notaCambiadaVuelta = new Intent();
         String tituloNuevo = titulo.getText().toString();
         String contenidoNuevo = contenido.getText().toString();
+
+        conexionRemota=new ConexionMySQL();
         //Seleccionamos las opciones del menú del actionBar
         switch (id) {
             case android.R.id.home:
@@ -68,105 +86,46 @@ String IP="10.0.2.2";
                 if (tituloNuevo.equals(tituloAntiguo) & contenidoNuevo.equals(contenidoAntiguo)) {
                     onBackPressed();
                 } else {
-                    //Llamamos a CargarDatos al que le pasamos la URL con los datos pasamos como GET
-                    //ENLACE IP
-                    new CargarDatos().execute("http://"+IP+"/RetroNotes/update.php?titulo=" + tituloNuevo + "" +
+                    //Cargamos los datos
+                    cambioDatos(tituloNuevo, contenidoNuevo);
+                    IP = preferencias.getString("IPNUEVA", "10.0.2.2");
+                    conexionRemota.CargaDatos("http://"+IP+"/RetroNotes/update.php?titulo=" + tituloNuevo + "" +
                             "&contenido=" + contenidoNuevo + "&tituloAnterior=" + tituloAntiguo + "&contenidoAnterior=" + contenidoAntiguo);
-                                }
+
+                    Toast.makeText(this, getString(R.string.toast_actualizarnota), Toast.LENGTH_LONG).show();
+                }
                 break;
             case R.id.mnu_aceptar:
                 //Si el contenido es el mismo o diferente
                 if (tituloNuevo.equals(tituloAntiguo) & contenidoNuevo.equals(contenidoAntiguo)) {
                     onBackPressed();
                 } else {
-                    //Llamamos a CargarDatos al que le pasamos la URL con los datos pasamos como GET
-                    //ENLACE IP
-                    new CargarDatos().execute("http://"+IP+"/RetroNotes/update.php?titulo=" + tituloNuevo + "" +
+                    //Se cargan los datos
+                    cambioDatos(tituloNuevo, contenidoNuevo);
+                    IP = preferencias.getString("IPNUEVA", "10.0.2.2");
+                    conexionRemota.CargaDatos("http://"+IP+"/RetroNotes/update.php?titulo=" + tituloNuevo + "" +
                             "&contenido=" + contenidoNuevo + "&tituloAnterior=" + tituloAntiguo + "&contenidoAnterior=" + contenidoAntiguo);
                 }
                 setResult(RESULT_OK, notaCambiadaVuelta);
                 onBackPressed();
-                Toast.makeText(this, "Nota guardada", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.toast_actualizarnota), Toast.LENGTH_LONG).show();
                 break;
         }
         return super.onOptionsItemSelected(item);
     }
 
     /**
-     * CargarDatos: clase que ejecuta la URL del archivo PHP en la base de datos para que ejecute
-     * cambios en la abse de datos
+     * Metodo que carga los datos modificados en la base de datos local
+     * @param titulo
+     * @param contenido
      */
-    private class CargarDatos extends AsyncTask<String, Void, String> {
-        @Override
-        //La conexion a la URL la realiza por detras, en otro hilo, asi evitamos crasheos
-
-        protected String doInBackground(String... urls) {
-            try {
-                return descargaURL(urls[0]);
-            } catch (IOException e) {
-                return "Conexion fallida a pagina web. URL puede no ser valida";
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-
-        }
-
-    }
-
-    /**
-     * descargaURL: se conecta a la URL especificada, y lo que consigue lo convierte en un inputStream
-     * para convertirlo en un String
-     *
-     * @param miUrl URL a ejecutar
-     * @return contenido en string
-     * @throws IOException
-     */
-    private String descargaURL(String miUrl) throws IOException {
-        InputStream is = null;
-        miUrl = miUrl.replace(" ", "%20");
-        int len = 500;
-        try {
-            //Convierte la URL como String en un objeto URL
-            URL url = new URL(miUrl);
-            //Creamos la conexion
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setReadTimeout(10000);
-            conn.setConnectTimeout(15000);
-            conn.setRequestMethod("GET");
-            conn.setDoInput(true);
-            //Conectamos
-            conn.connect();
-
-            //Lo que responda la URl, lo guarda en el inputStream
-            is = conn.getInputStream();
-
-            //Convertimos el contenido en un string
-            String contenidoEnString = pasoAString(is, len);
-            return contenidoEnString;
-        } finally {
-            if (is != null) {
-                is.close();
-            }
+    public void cambioDatos(String titulo, String contenido) {
+        SentenciasSQLite conexion = new SentenciasSQLite(getApplicationContext(), "datos_notas",
+                null, 1);
+        SQLiteDatabase db = conexion.getWritableDatabase();
+        conexion.modificarDatos(db, titulo, contenido, tituloAntiguo, contenidoAntiguo);
+        if (db != null) {
+            db.close();
         }
     }
-
-    /**
-     * pasoAString: transforma el contenido recogido de la URL en string mediante buffer
-     *
-     * @param stream   inputStream de la URL
-     * @param longitud longitud de la URL
-     * @return
-     * @throws IOException
-     * @throws UnsupportedEncodingException
-     */
-    public String pasoAString(InputStream stream, int longitud) throws IOException {
-        Reader reader = null;
-        reader = new InputStreamReader(stream, "UTF-8");
-        char[] buffer = new char[longitud];
-        reader.read(buffer);
-        return new String(buffer);
-    }
-
 }

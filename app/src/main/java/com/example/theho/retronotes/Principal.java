@@ -1,12 +1,22 @@
 package com.example.theho.retronotes;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
+import android.text.Html;
+import android.text.Spanned;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.LayoutInflater;
+import android.view.MenuInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -17,14 +27,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
-
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
-import com.loopj.android.http.RequestParams;
-
-import org.json.JSONArray;
-import org.json.JSONException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,78 +39,62 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-
-public class Principal extends AppCompatActivity {
+public class Principal extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, ComprobacionConexion.CambioIPListener {
     private ListView lv;
     private Adaptador adaptador;
-    private ArrayList<Nota> nota;
-
-    String response_body;
     int request_code;
-    String IP="10.0.2.2";
+    String IP;
+    SharedPreferences preferencias;
+    SharedPreferences.Editor editorPreferencias;
+    SentenciasSQLite bd;
+    ConexionMySQL conexionRemota;
+    int menuPosicion;
+    SQLiteDatabase leer;
+    Cursor cursor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        preferencias = this.getSharedPreferences("Preferencias", Context.MODE_PRIVATE);
+
+        //Cambio de tema de la aplicación
+        int tema = preferencias.getInt("TEMA", R.style.AppTheme);
+        setTheme(tema);
+
         setContentView(R.layout.activity_principal);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //Establecemos el valor de la IP
+        IP = preferencias.getString("IPNUEVA", "10.0.2.2");
+
         //Obtenemos los datos para mostrar en listView
-        ObtDatos();
+        CargarListaLocal(obtDatos());
 
-        //Generamos un arrayList de tipo Nota donde se guardaran los datos para mostrarlos
-        nota = new ArrayList<>();
-        adaptador = new Adaptador(nota, this);
-        lv = findViewById(R.id.lvNotas);
-        lv.setAdapter(adaptador);
-        adaptador.notifyDataSetChanged();
-
+        //Cargamos el menu contextual para cada nota individual
+        registerForContextMenu(lv);
         //Si se hace un click sobre la nota se puede editar
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 request_code = 1;
-                //Obtenemos el JSON de todos los datos, para conseguir el elemento concreto que buscamos
-                try {
-                    JSONArray jsonArray = new JSONArray(response_body);
-                    String tituloCambiar;
-                    String contenidoCambiar;
-
-                    //Conseguimos todas las variables que buscamos en la posicion seleccionada
-                    tituloCambiar = jsonArray.getJSONObject(position).getString("titulo");
-                    contenidoCambiar = jsonArray.getJSONObject(position).getString("contenido");
+                bd = new SentenciasSQLite(getApplicationContext(), "datos_notas", null, 1);
+                leer = bd.getReadableDatabase();
+                String sentenciaEditar = "select * from datos_notas";
+                cursor = leer.rawQuery(sentenciaEditar, null);
+                if (cursor.moveToPosition(position)) {
+                    String tituloEditar;
+                    String contenidoEditar;
+                    tituloEditar = cursor.getString(cursor.getColumnIndex("titulo"));
+                    contenidoEditar = cursor.getString(cursor.getColumnIndex("contenido"));
 
                     //Lanzamos un intent a ActualizarNota para que muestre los datos ya guardados
                     Intent actualizarNota = new Intent(Principal.this, ActualizarNota.class);
-                    actualizarNota.putExtra("TITULO", tituloCambiar);
-                    actualizarNota.putExtra("CONTENIDO", contenidoCambiar);
+                    actualizarNota.putExtra("TITULO", tituloEditar);
+                    actualizarNota.putExtra("CONTENIDO", contenidoEditar);
                     startActivityForResult(actualizarNota, request_code);
-                } catch (JSONException e) {
-                    e.printStackTrace();
                 }
-            }
-        });
-
-        //Un click largo en la nota la elimina de la lista
-        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                try {
-                    //Obtenemos los datos de la nota seleccionada de su JSON
-                    JSONArray jsonArray = new JSONArray(response_body);
-                    String tituloBorrar;
-                    String contenidoBorrar;
-                    tituloBorrar = jsonArray.getJSONObject(position).getString("titulo");
-                    contenidoBorrar = jsonArray.getJSONObject(position).getString("contenido");
-                    //Ejecutamos la URL que borra datos
-                    //ENLACE IP
-                    new CargarDatos().execute("http://"+IP+"/RetroNotes/borrado.php?titulo=" + tituloBorrar + "&contenido=" + contenidoBorrar);
-                    Toast.makeText(getApplicationContext(), "Nota eliminada", Toast.LENGTH_SHORT).show();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return true;
+                cursor.close();
             }
         });
 
@@ -121,139 +109,196 @@ public class Principal extends AppCompatActivity {
             }
         });
 
+        //Menu lateral
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        //Si el tema es el normal, el fondo del navigation view es blanco
+        if (tema == R.style.AppTheme) {
+            navigationView.setBackgroundResource(R.color.white);
+        }
+
+
+
     }
 
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        MenuInflater inflador = getMenuInflater();
+        if (v.getId() == R.id.lvNotas) {
+            inflador.inflate(R.menu.contextual_nota, menu);
+            menuPosicion = ((AdapterView.AdapterContextMenuInfo) menuInfo).position;
+        }
+        super.onCreateContextMenu(menu, v, menuInfo);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.opcEditar:
+                bd = new SentenciasSQLite(getApplicationContext(), "datos_notas", null, 1);
+                leer = bd.getReadableDatabase();
+                String sentenciaEditar = "select * from datos_notas";
+                cursor = leer.rawQuery(sentenciaEditar, null);
+                if (cursor.moveToPosition(menuPosicion)) {
+                    String tituloEditar;
+                    String contenidoEditar;
+                    tituloEditar = cursor.getString(cursor.getColumnIndex("titulo"));
+                    contenidoEditar = cursor.getString(cursor.getColumnIndex("contenido"));
+
+                    //Lanzamos un intent a ActualizarNota para que muestre los datos ya guardados
+                    Intent actualizarNota = new Intent(Principal.this, ActualizarNota.class);
+                    actualizarNota.putExtra("TITULO", tituloEditar);
+                    actualizarNota.putExtra("CONTENIDO", contenidoEditar);
+                    startActivityForResult(actualizarNota, request_code);
+                }
+                cursor.close();
+                break;
+            case R.id.opcBorrar:
+                bd = new SentenciasSQLite(getApplicationContext(), "datos_notas", null, 1);
+                leer = bd.getReadableDatabase();
+                String sentenciaBorrar = "select * from datos_notas";
+                cursor = leer.rawQuery(sentenciaBorrar, null);
+                if (cursor.moveToPosition(menuPosicion)) {
+                    String titulo;
+                    String contenido;
+                    String color;
+                    titulo = cursor.getString(cursor.getColumnIndex("titulo"));
+                    contenido = cursor.getString(cursor.getColumnIndex("contenido"));
+                    color = cursor.getString(cursor.getColumnIndex("color"));
+                    SQLiteDatabase borrar = bd.getWritableDatabase();
+                    //Cargamos datos a la base de datos local
+                    bd.borrarDatos(borrar, titulo, contenido, color);
+                    IP = preferencias.getString("IPNUEVA", "10.0.2.2");
+                    conexionRemota = new ConexionMySQL();
+                    //Cargamos datos a la base de datos remota
+                    conexionRemota.CargaDatos("http://" + IP + "/RetroNotes/borrado.php?titulo=" + titulo + "&contenido=" + contenido);
+                    if (borrar != null && leer != null) {
+                        borrar.close();
+                        leer.close();
+                    }
+                }
+                cursor.close();
+                CargarListaLocal(obtDatos());
+                Toast.makeText(getApplicationContext(), getString(R.string.toast_notaeliminada), Toast.LENGTH_SHORT).show();
+                break;
+            default:
+                return super.onContextItemSelected(item);
+        }
+        return true;
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         //Accion cuando volvemos del segundo activity
         if (requestCode == request_code && resultCode == RESULT_OK) {
             //Se cargan los datos de nuevo para actualizar la lista
-            ObtDatos();
-            adaptador = new Adaptador(nota, getApplicationContext());
-            lv = findViewById(R.id.lvNotas);
-            lv.setAdapter(adaptador);
-            adaptador.notifyDataSetChanged();
+            CargarListaLocal(obtDatos());
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    /**
-     * CargarDatos: clase que ejecuta la URL del archivo PHP en la base de datos para que ejecute
-     * cambios en la base de datos
-     */
-    private class CargarDatos extends AsyncTask<String, Void, String> {
-        @Override
-        //La conexion a la URL la realiza por detras, en otro hilo, asi evitamos crasheos
-        protected String doInBackground(String... urls) {
-            try {
-                return descargaUrl(urls[0]);
-            } catch (IOException e) {
-                return "Conexion fallida a pagina web. URL puede no ser valida";
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            //Despues de realizar el borrado de los datos, actualizamos la listview para que se muestre
-            //con los datos nuevos
-            adaptador = new Adaptador(nota, getApplicationContext());
-            lv = findViewById(R.id.lvNotas);
-            lv.setAdapter(adaptador);
-            adaptador.notifyDataSetChanged();
-            //Obtenemos los datos de nuevo
-            ObtDatos();
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
         }
     }
 
     /**
-     * descargaURL: se conecta a la URL especificada, y lo que consigue lo convierte en un inputStream
-     * para convertirlo en un String
-     *
-     * @param miUrl URL a ejecutar
-     * @return contenido en string
-     * @throws IOException
+     * Menu de seleccion de temas
      */
-    private String descargaUrl(String miUrl) throws IOException {
-        InputStream is = null;
-        miUrl = miUrl.replace(" ", "%20");
-        int len = 500;
-        try {
-            //Convierte la URL como String en un objeto URL
-            URL url = new URL(miUrl);
-            //Creamos la conexion
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setReadTimeout(10000);
-            conn.setConnectTimeout(15000);
-            conn.setRequestMethod("GET");
-            conn.setDoInput(true);
-            //Conectamos
-            conn.connect();
-            //Lo que responda la URl, lo guarda en el inputStream
-            is = conn.getInputStream();
+    public void CreateAlertDialogWithRadioButtonGroup() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(Principal.this);
+        builder.setTitle(getString(R.string.menu_tema_titulo));
+        String[] values = {getString(R.string.menu_tema_oscuro), getString(R.string.menu_tema_clasico)};
+        preferencias = this.getSharedPreferences("Preferencias", Context.MODE_PRIVATE);
 
-            //Convertimos el contenido en un string
-            String contentAsString = pasoAString(is, len);
-            return contentAsString;
-        } finally {
-            if (is != null) {
-                is.close();
-            }
-        }
-    }
-
-    /**
-     * pasoAString: transforma el contenido recogido de la URL en string mediante buffer
-     *
-     * @param stream   inputStream de la URL
-     * @param longitud longitud de la URL
-     * @return
-     * @throws IOException
-     * @throws UnsupportedEncodingException
-     */
-    //Transforma el resultado de la conexion URL a String mediante un buffer
-    public String pasoAString(InputStream stream, int longitud) throws IOException, UnsupportedEncodingException {
-        Reader reader = null;
-        reader = new InputStreamReader(stream, "UTF-8");
-        char[] buffer = new char[longitud];
-        reader.read(buffer);
-        return new String(buffer);
-    }
-
-
-    /**
-     * Obtenemos los datos de consulta de toda la abse de datos para que los clasifique y los guarde,
-     * y a su vez se muestren
-     */
-    public void ObtDatos() {
-        AsyncHttpClient client = new AsyncHttpClient();
-        //ENLACE IP
-        String url = "http://"+IP+"/RetroNotes/consulta.php";
-        RequestParams parametros = new RequestParams();
-        parametros.put("id", 8);
-        client.post(url, parametros, new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, org.apache.http.Header[] headers, byte[] responseBody) {
-                if (statusCode == 200) {
-                    //Carga el arrayList de los objeton JSON
-                    CargarLista(obtDatosJSON(new String(responseBody)));
-                    response_body = new String(responseBody);
+        int seleccionado = preferencias.getInt("OPCION_SELECCIONADA_TEMA", 1);
+        builder.setSingleChoiceItems(values, seleccionado, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int item) {
+                switch (item) {
+                    case 0:
+                        Toast.makeText(Principal.this, getString(R.string.toast_modooscuro), Toast.LENGTH_LONG).show();
+                        editorPreferencias = preferencias.edit();
+                        editorPreferencias.putInt("TEMA", R.style.Oscuro);
+                        editorPreferencias.putInt("OPCION_SELECCIONADA_TEMA", 0);
+                        editorPreferencias.apply();
+                        recreate();
+                        break;
+                    case 1:
+                        Toast.makeText(Principal.this, getString(R.string.toast_modoclasico), Toast.LENGTH_LONG).show();
+                        editorPreferencias = preferencias.edit();
+                        editorPreferencias.putInt("TEMA", R.style.AppTheme);
+                        editorPreferencias.putInt("OPCION_SELECCIONADA_TEMA", 1);
+                        editorPreferencias.apply();
+                        recreate();
+                        break;
                 }
             }
-
-            @Override
-            public void onFailure(int statusCode, org.apache.http.Header[] headers, byte[] responseBody, Throwable error) {
-
-            }
         });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.nav_notas) {
+            onBackPressed();
+        } else if (id == R.id.nav_tema) {
+            CreateAlertDialogWithRadioButtonGroup();
+        } else if (id == R.id.nav_cambio_ip) {
+            mostrarDialogoIP();
+        } else if (id == R.id.nav_info) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(Principal.this);
+            LayoutInflater inflador = getLayoutInflater();
+            builder.setView(inflador.inflate(R.layout.texto_info, null));
+            builder.setPositiveButton(getString(R.string.btn_aceptar), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+
+                }
+            });
+            builder.create();
+            builder.show();
+        }
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
     }
 
     /**
-     * Carga el listView con los datos sacados de obtDatosJSON
+     * Muestra la ventana de dialogo para cambiar la IP
+     */
+    public void mostrarDialogoIP() {
+        ComprobacionConexion comprobarIP = new ComprobacionConexion();
+        comprobarIP.show(getSupportFragmentManager(), "ip");
+    }
+
+    @Override
+    public void conseguirIP(String ipMenu) {
+        //Conseguimos el valor de la IP escrita
+        IP = ipMenu;
+        IP = preferencias.getString("IPNUEVA", "10.0.2.2");
+    }
+
+    /**
+     * Carga el listView con los datos sacados de obtDatos
      *
      * @param datos arrayList de datos
      */
-    public void CargarLista(ArrayList<Nota> datos) {
+    public void CargarListaLocal(ArrayList<Nota> datos) {
         adaptador = new Adaptador(datos, this);
         lv = findViewById(R.id.lvNotas);
         lv.setAdapter(adaptador);
@@ -263,30 +308,27 @@ public class Principal extends AppCompatActivity {
     /**
      * Obtiene los datos de la base de datos en JSON y los guarda por separado en un array de tipo Nota
      *
-     * @param respuesta
-     * @return
+     * @return arrayList con los datos a pasarle al adaptador
      */
-    public ArrayList<Nota> obtDatosJSON(String respuesta) {
-        ArrayList<Nota> listado = new ArrayList();
-        try {
-            JSONArray jsonArray = new JSONArray(respuesta);
+    public ArrayList<Nota> obtDatos() {
+        ArrayList<Nota> listado = new ArrayList<>();
+        bd = new SentenciasSQLite(getApplicationContext(), "datos_notas", null, 1);
+        SQLiteDatabase db = bd.getReadableDatabase();
+        String sentencia = "select * from datos_notas";
+        Cursor cursor = db.rawQuery(sentencia, null);
+        if (cursor.moveToFirst()) {
             String titulo;
             String contenido;
             String color;
-            String hora;
-            for (int i = 0; i < jsonArray.length(); i++) {
-                //Conseguimos todas las variables y las guardamos en un arrayList de tipo Nota
-                titulo = jsonArray.getJSONObject(i).getString("titulo");
-                contenido = jsonArray.getJSONObject(i).getString("contenido");
-                color = jsonArray.getJSONObject(i).getString("color");
-                hora = jsonArray.getJSONObject(i).getString("hora");
-                Nota nuevaNota = new Nota(titulo, contenido, hora, "#" + color);
+            do {
+                titulo = cursor.getString(cursor.getColumnIndex("titulo"));
+                contenido = cursor.getString(cursor.getColumnIndex("contenido"));
+                color = cursor.getString(cursor.getColumnIndex("color"));
+                Nota nuevaNota = new Nota(titulo, contenido, "#" + color);
                 listado.add(nuevaNota);
-            }
-        } catch (JSONException error) {
-            error.printStackTrace();
+            } while (cursor.moveToNext());
         }
+        cursor.close();
         return listado;
     }
-
 }
